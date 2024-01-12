@@ -1,9 +1,8 @@
 from PIL import Image
-import matplotlib as mpl
 from matplotlib import pyplot as plt
 import numpy as np
-from PyQt5 import QtGui
-import sys
+import os
+import pathlib
 
 class Kernal():
     # Popular kernals
@@ -34,8 +33,7 @@ class CNN:
         pass
     
 
-mpl.use('Qt5Agg')
-image_path = "/home/minh/aimesoft_1st_training/CRNN/image sample/stinkbug.png"
+image_path = os.path.abspath(os.path.join(pathlib.Path(__file__).parent.resolve(), '..', 'resource', 'stinkbug.png'))
 cnn = CNN(image_path, Kernal.ridge_detection)
 print(cnn.photo_to_matrix())
 img_plot = plt.imshow(cnn.photo_to_matrix())
@@ -46,7 +44,3 @@ a2 = np.array([[3,4],[6,7],[9,10]])
 a3 = np.array([[1,2,3],[4,5,6],[7,8,9]])
 print(a1 * a2)
 """
-
-app = QtGui.QGuiApplication([])
-app.exec()
-
