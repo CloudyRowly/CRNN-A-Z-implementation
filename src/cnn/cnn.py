@@ -1,9 +1,11 @@
+import time
 from PIL import Image
 from matplotlib import pyplot as plt
-import numpy as np
-import cupy as cp
+import numpy as cp
+import cupy as cp2
 import os
 import pathlib
+import multiprocessing as mp
 
 class Kernal():
     # Popular kernals
@@ -14,6 +16,10 @@ class Kernal():
     edge_detection = cp.array([[-1, -1, -1],
                                [-1,  8, -1],
                                [-1, -1, -1]])
+    
+    depth_detection = cp.array([[-1,  0, 1],
+                           [-1,  0, 1],
+                           [-1,  0, 1]])
     
     
 class ImageUtils():    
@@ -133,6 +139,8 @@ class ImageUtils():
     
     
 class CNN:
+    conv_mat = None
+    
     def __init__(self, photo_path, kernal, padding=1):
         self.photo_path = photo_path
         self.photo = Image.open(self.photo_path)
@@ -144,20 +152,52 @@ class CNN:
         if self.padding != 0:
             expanding_length = (self.kernal.shape[0] - 1) // 2
             self.extended_mat = ImageUtils.expand_photo_matrix(self.mat, expanding_length)
+        self.conv_mat = self.convolution_multiprocessing()
     
     
+    def convolution(self):
+        """Convolution of the photo matrix with the kernal
+        """
+        conv_mat = cp.zeros((self.extended_mat.shape[0] - self.kernal.shape[0] + 1, self.extended_mat.shape[1] - self.kernal.shape[1] + 1))
+
+        for m in range(conv_mat.shape[0]):
+            for n in range(conv_mat.shape[1]):
+                conv_mat[m, n] = cp.sum(cp.multiply(self.extended_mat[m:m + self.kernal.shape[0], n:n + self.kernal.shape[1]], self.kernal))
+                
+        return conv_mat
     
+    
+    def row_convolution(self, conv_mat, m):
+        temp_row = cp.zeros((1, conv_mat.shape[1]))
+        for n in range(conv_mat.shape[1]):
+            temp_row[0, n] = cp.sum(cp.multiply(self.extended_mat[m:m + self.kernal.shape[0], n:n + self.kernal.shape[1]], self.kernal))
+        return temp_row
+    
+    
+    def convolution_multiprocessing(self):
+        """Convolution of the photo matrix with the kernal using multiprocessing
+        """
+        conv_mat = cp.zeros((self.extended_mat.shape[0] - self.kernal.shape[0] + 1, self.extended_mat.shape[1] - self.kernal.shape[1] + 1))
+        pool = mp.Pool(8)
+        for m in range(conv_mat.shape[0]):
+            temp_row = pool.apply_async(self.row_convolution, args=(conv_mat, m))
+            conv_mat[m, :] = temp_row.get()
+        pool.close()                
+        return conv_mat
 
 
-
-
-
-image_path = os.path.abspath(os.path.join(pathlib.Path(__file__).parent.resolve(), '..', 'resource', 'stinkbug.png'))
-cnn = CNN(image_path, Kernal.ridge_detection)
-print(cnn.mat.shape)
-img_plot = plt.imshow(cnn.mat.get(), cmap='gray')
-print(cnn.extended_mat.shape)
-img_plot = plt.imshow(cnn.extended_mat.get(), cmap='gray')
+### Drafts ###
+image_path = os.path.abspath(os.path.join(pathlib.Path(__file__).parent.resolve(), '..', 'resource', 'woman8k.jpg'))
+#cnn = CNN(image_path, Kernal.ridge_detection)
+#print(cnn.mat.shape)
+#img_plot = plt.imshow(cnn.mat.get(), cmap='gray')
+#print(cnn.extended_mat.shape)
+#img_plot = plt.imshow(cnn.conv_mat.get(), cmap='gray')
+s = time.time()
+cnn2 = CNN(image_path, Kernal.depth_detection)
+e = time.time()
+print("time taken: " + str(e - s))
+#img_plot2 = plt.imshow(cnn2.conv_mat.get(), cmap='gray')
 
 a1 = cp.array([[1,2],
                [3,4],
