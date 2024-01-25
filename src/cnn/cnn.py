@@ -138,9 +138,7 @@ class ImageUtils():
         return new_matrix
     
     
-class CNN:
-    conv_mat = None
-    
+class CNN:    
     def __init__(self, photo_path, kernal, padding=1):
         self.photo_path = photo_path
         self.photo = Image.open(self.photo_path)
@@ -152,8 +150,9 @@ class CNN:
         if self.padding != 0:
             expanding_length = (self.kernal.shape[0] - 1) // 2
             self.extended_mat = ImageUtils.expand_photo_matrix(self.mat, expanding_length)
-        self.conv_mat = self.convolution_multiprocessing()
-    
+        # self.conv_mat = self.convolution_multiprocessing(8)
+        self.conv_mat = self.convolution()
+        
     
     def convolution(self):
         """Convolution of the photo matrix with the kernal
@@ -167,23 +166,39 @@ class CNN:
         return conv_mat
     
     
-    def row_convolution(self, conv_mat, m):
-        temp_row = cp.zeros((1, conv_mat.shape[1]))
-        for n in range(conv_mat.shape[1]):
-            temp_row[0, n] = cp.sum(cp.multiply(self.extended_mat[m:m + self.kernal.shape[0], n:n + self.kernal.shape[1]], self.kernal))
-        return temp_row
+    def package_convolution(self, extended_mat, m1, m2):
+        """Convolution of the photo matrix with the kernal
+        """
+        package_mat = cp.zeros((m2 - m1, self.extended_mat.shape[1] - self.kernal.shape[1] + 1))
+        
+        for m in range(m1, m2):            
+            for n in range(package_mat.shape[1]):
+                package_mat[m, n] = cp.sum(cp.multiply(self.extended_mat[m:m + self.kernal.shape[0], n:n + self.kernal.shape[1]], self.kernal))
+        return package_mat
     
     
-    def convolution_multiprocessing(self):
+    def convolution_multiprocessing(self, core_available):
         """Convolution of the photo matrix with the kernal using multiprocessing
         """
-        conv_mat = cp.zeros((self.extended_mat.shape[0] - self.kernal.shape[0] + 1, self.extended_mat.shape[1] - self.kernal.shape[1] + 1))
-        pool = mp.Pool(8)
-        for m in range(conv_mat.shape[0]):
-            temp_row = pool.apply_async(self.row_convolution, args=(conv_mat, m))
-            conv_mat[m, :] = temp_row.get()
-        pool.close()                
-        return conv_mat
+        package_size = 256  # minimum package size for optimal performance
+        package_number = self.extended_mat.shape[0] // package_size
+        if package_number > core_available:
+            package_size = self.extended_mat.shape[0] // core_available
+            package_number = core_available
+        
+        pool = mp.Pool(core_available)
+        result_chunks = []
+        for process in range(package_number):
+            m_end = (process + 1) * package_size
+            if process == package_number - 1:
+                m_end = self.extended_mat.shape[0]
+            result_chunks.append(pool.apply_async(self.package_convolution, args=(self.extended_mat, process * package_size, m_end)))
+
+        pool.close()
+        pool.join()
+        print(result_chunks[0].get())
+        #for result in result_chunks:
+        #    print(result.get())
 
 
 ### Drafts ###
