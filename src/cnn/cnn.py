@@ -6,10 +6,12 @@ import cupy as cp2
 import os
 import pathlib
 import multiprocessing as mp
+from numba import njit
+
 from utils import ImageUtils
 
 class Kernal():
-    # Popular kernals
+    # Predefined popular kernals
     ridge_detection = cp.array([[0 , -1,  0],
                                 [-1,  4, -1],
                                 [0 , -1,  0]])
@@ -22,13 +24,13 @@ class Kernal():
                            [-1,  0, 1],
                            [-1,  0, 1]])
     
+    
     def __init__(self, size_m = 3, size_n = 3):
         self.shape = (size_m, size_n)
         self.kernal = cp.random.randn(self.size_m, self.size_n)
         
     
-    
-class Convolution_layer():    
+class Convolution_filter():    
     def __init__(self, photo_path, kernal, padding=1):
         self.photo_path = photo_path
         self.photo = Image.open(self.photo_path)
@@ -40,11 +42,11 @@ class Convolution_layer():
         if self.padding != 0:
             expanding_length = (self.kernal.shape[0] - 1) // 2
             self.extended_mat = ImageUtils.expand_photo_matrix(self.mat, expanding_length)
-        self.conv_mat = self.convolution_multiprocessing(8)
-        self.conv_mat = self.relu()
-        # self.conv_mat = self.convolution()
+        # self.conv_mat = self.convolution_multiprocessing(8)
+        self.conv_mat = self.convolution()
         
     
+    @njit
     def convolution(self):
         """Convolution of the photo matrix with the kernal
         """
@@ -75,7 +77,7 @@ class Convolution_layer():
         return pool_mat
     
     
-    def package_convolution(self, extended_mat, m1, m2):
+    def package_convolution(self, m1, m2):
         """Convolution of the photo matrix with the kernal
         """
         package_mat = cp.zeros((m2 - m1, self.extended_mat.shape[1] - self.kernal.shape[1] + 1))
@@ -101,7 +103,7 @@ class Convolution_layer():
             m_end = (process + 1) * package_size
             if process == package_number - 1:
                 m_end = self.mat.shape[0]
-            result_chunks.append(pool.apply_async(self.package_convolution, args=(self.extended_mat, process * package_size, m_end)))
+            result_chunks.append(pool.apply_async(self.package_convolution, args=(process * package_size, m_end)))
 
         pool.close()
         pool.join()
@@ -110,6 +112,10 @@ class Convolution_layer():
             for result in result_chunks[1:]:
                 self.conv_mat = cp.vstack((self.conv_mat, result.get()))
         return self.conv_mat
+    
+    
+#class CNN:
+    
 
 
 ### Drafts ###
@@ -120,7 +126,7 @@ image_path = os.path.abspath(os.path.join(pathlib.Path(__file__).parent.resolve(
 #print(cnn.extended_mat.shape)
 #img_plot = plt.imshow(cnn.conv_mat.get(), cmap='gray')
 s = time.time()
-cnn2 = CNN(image_path, Kernal.depth_detection)
+cnn2 = Convolution_filter(image_path, Kernal.depth_detection)
 e = time.time()
 print("time taken: " + str(e - s))
 img_plot2 = plt.imshow(cnn2.conv_mat, cmap='gray')
