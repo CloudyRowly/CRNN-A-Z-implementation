@@ -60,8 +60,8 @@ class CNN:
             
         # expand the image matrix
         self.expansion_length = (kernal_shape[0] - 1) // 2
-        self.expanded_feature_maps = cp.zeros((self.photo_mat.shape[0] + 2 * self.expansion_length, 
-                                               self.photo_mat.shape[1] + 2 * self.expansion_length,
+        self.expanded_feature_maps = cp.zeros((self.feature_maps.shape[0] + 2 * self.expansion_length, 
+                                               self.feature_maps.shape[1] + 2 * self.expansion_length,
                                                self.filter_number))
         if self.padding != 0:
             pool = mp.Pool(self.available_core)
@@ -91,6 +91,32 @@ class CNN:
         pool.close()
         pool.join()
         for i in range(filter_number):
+            temp_feature_maps[:, :, i] = feature_map_result[i].get()
+        
+        self.feature_maps = temp_feature_maps.copy()
+        
+    
+    def max_pooling_(self, feature_map, window_size=(2, 2), stride = (2, 2)):
+        w_pool = window_size[0]
+        h_pool = window_size[1]
+        pool_mat = cp.zeros((self.feature_maps.shape[0] // stride[1], self.feature_maps.shape[1] // stride[0]))
+        for m in range(pool_mat.shape[0]):
+            for n in range(pool_mat.shape[1]):
+                pool_mat[m, n] = cp.max(feature_map[m * stride[1]:m * stride[1] + h_pool, n * stride[0]:n * stride[0] + w_pool])
+        return pool_mat
+    
+        
+    def max_pooling(self, window_size=(2, 2), stride = (2, 2)):
+        """Max pooling of the photo matrix with the window size and stride (width, height)
+        """
+        temp_feature_maps = cp.zeros((self.feature_maps.shape[0] // stride[1], self.feature_maps.shape[1] // stride[0], self.feature_maps.shape[-1]))
+        pool = mp.Pool(self.available_core)
+        feature_map_result = []
+        for i in range(self.filter_number):
+            feature_map_result.append(pool.apply_async(self.max_pooling_, args=(self.feature_maps[:, :, i], window_size, stride)))
+        pool.close()
+        pool.join()
+        for i in range(self.filter_number):
             temp_feature_maps[:, :, i] = feature_map_result[i].get()
         
         self.feature_maps = temp_feature_maps.copy()

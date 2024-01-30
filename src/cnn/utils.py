@@ -1,6 +1,7 @@
 import numpy as cp
 import cupy as cp2
 import PIL as Image
+import multiprocessing as mp
 
 class ImageUtils():    
     def rgb_to_greyscale(photo):

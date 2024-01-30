@@ -25,12 +25,26 @@ def __main__():
 
     s = time.time()
     cnn = CNN(image_path, 32, 8)
-    cnn.convolution(32)
+    cnn.convolution(64)
     e = time.time()
     print("time taken: " + str(e - s))
     feature_map = cnn.get_feature_map()
     run.render_features(feature_map, "L1.png", (4, 8))
-    time.sleep(10)
+    
+    s = time.time()
+    cnn.max_pooling()
+    feature_map_2 = cnn.get_feature_map()
+    e = time.time()
+    print("time taken: " + str(e - s))
+    run.render_features(feature_map_2, "L2.png", (4, 8))
+    
+    s = time.time()
+    cnn.convolution(128)
+    feature_map_3 = cnn.get_feature_map()
+    e = time.time()
+    print("time taken: " + str(e - s))
+    run.render_features(feature_map_3, "L3.png", (4, 8))
+    
 
 
 if __name__ == '__main__':
