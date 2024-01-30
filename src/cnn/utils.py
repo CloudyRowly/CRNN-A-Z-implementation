@@ -1,5 +1,6 @@
 import numpy as cp
 import cupy as cp2
+import PIL as Image
 
 class ImageUtils():    
     def rgb_to_greyscale(photo):
@@ -115,3 +116,16 @@ class ImageUtils():
             new_matrix[i, start_col:start_col + expansion_length] = new_matrix[i, ref_col]
         
         return new_matrix
+    
+    
+    def resize_by_height(photo, height):
+        """Resize the photo by height
+        
+        Args:
+            photo (Image): photo to be resized
+            height (int): height of the resized photo
+        Returns:
+            resized photo
+        """
+        width = int(height * photo.size[0] / photo.size[1])
+        return photo.resize((width, height))
