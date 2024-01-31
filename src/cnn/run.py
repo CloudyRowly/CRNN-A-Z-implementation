@@ -70,7 +70,7 @@ def __main__():
     cnn.max_pooling(window_size=(1, 2), stride = (1, 2))
     feature_map_10 = cnn.get_feature_map()
     
-    cnn.convolution(512, kernal_shape=(2, 2))
+    cnn.convolution(512, kernal_shape=(2, 2), padding=0)
     cnn.relu()
     feature_map_11 = cnn.get_feature_map()
     print(feature_map_11.shape)
@@ -82,7 +82,7 @@ def __main__():
     run.render_features(feature_map_2, "L2.png", (8,8))
     run.render_features(feature_map_3, "L3.png", (16, 8))
     run.render_features(feature_map_3_relu, "L3_relu.png", (16, 8))
-    run.render_features(feature_map_4, "L3.png", (16, 8))
+    run.render_features(feature_map_4, "L4.png", (16, 8))
     run.render_features(feature_map_5, "L5.png", (16, 16))
     run.render_features(feature_map_5_relu, "L5_relu.png", (16, 16))
     run.render_features(feature_map_6_relu, "L6_relu.png", (16, 16))
@@ -94,8 +94,5 @@ def __main__():
     run.render_features(feature_map_11, "L11.png", (16, 32))
     
     
-    
-
-
 if __name__ == '__main__':
     __main__()

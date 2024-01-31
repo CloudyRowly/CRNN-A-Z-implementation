@@ -13,22 +13,22 @@ class ImageUtils():
         return m
     
     
-    def expand_photo_matrix(photo_matrix, expansion_length):
+    def expand_photo_matrix(photo_matrix, expansion_lengths):
         """Extend the photo matrix using "expansion" edge handling
 
         Args:
             photo_matrix (ndarray): matrix of the photo
             expansion_length (int): length of expansion of a corner
         """
-        expanded_matrix = cp.zeros((photo_matrix.shape[0] + 2 * expansion_length, photo_matrix.shape[1] + 2 * expansion_length))
-        expanded_matrix[expansion_length:expanded_matrix.shape[0] - expansion_length, 
-                        expansion_length:expanded_matrix.shape[1] - expansion_length] = photo_matrix.copy()
-        expanded_matrix = ImageUtils.__fill_corners(expansion_length, expanded_matrix)
-        expanded_matrix = ImageUtils.__fill_edges(expansion_length, expanded_matrix)
+        expanded_matrix = cp.zeros((photo_matrix.shape[0] + 2 * expansion_lengths[0], photo_matrix.shape[1] + 2 * expansion_lengths[1]))
+        expanded_matrix[expansion_lengths[0]:expanded_matrix.shape[0] - expansion_lengths[0], 
+                        expansion_lengths[1]:expanded_matrix.shape[1] - expansion_lengths[1]] = photo_matrix.copy()
+        expanded_matrix = ImageUtils.__fill_corners(expansion_lengths, expanded_matrix)
+        expanded_matrix = ImageUtils.__fill_edges(expansion_lengths, expanded_matrix)
         return expanded_matrix
     
     
-    def __fill_corners(expansion_length, expanded_matrix):
+    def __fill_corners(expansion_lengths, expanded_matrix):
         """fill in the corner of the expanded matrix
         
         Args:
@@ -36,26 +36,26 @@ class ImageUtils():
         """
         # top left corner
         new_matrix = expanded_matrix.copy()
-        new_matrix[0:expansion_length, 0:expansion_length] = new_matrix[expansion_length, expansion_length]
+        new_matrix[0:expansion_lengths[0], 0:expansion_lengths[1]] = new_matrix[expansion_lengths[0], expansion_lengths[1]]
         
         # bottom left corner
-        new_matrix[new_matrix.shape[0] - expansion_length:new_matrix.shape[0], 
-                   0:expansion_length] = new_matrix[new_matrix.shape[0] - expansion_length - 1, expansion_length]
+        new_matrix[new_matrix.shape[0] - expansion_lengths[0]:new_matrix.shape[0], 
+                   0:expansion_lengths[1]] = new_matrix[new_matrix.shape[0] - expansion_lengths[0] - 1, expansion_lengths[1]]
         
         # top right corner
-        new_matrix[0:expansion_length,
-                   new_matrix.shape[1] - expansion_length:new_matrix.shape[1]] = new_matrix[expansion_length, 
-                                                                                            new_matrix.shape[1] - expansion_length - 1]
+        new_matrix[0:expansion_lengths[0],
+                   new_matrix.shape[1] - expansion_lengths[1]:new_matrix.shape[1]] = new_matrix[expansion_lengths[0], 
+                                                                                            new_matrix.shape[1] - expansion_lengths[1] - 1]
                    
         # bottom right corner
-        new_matrix[new_matrix.shape[0] - expansion_length:new_matrix.shape[0],
-                   new_matrix.shape[1] - expansion_length:new_matrix.shape[1]] = new_matrix[new_matrix.shape[0] - expansion_length - 1, 
-                                                                                            new_matrix.shape[1] - expansion_length - 1]
+        new_matrix[new_matrix.shape[0] - expansion_lengths[0]:new_matrix.shape[0],
+                   new_matrix.shape[1] - expansion_lengths[1]:new_matrix.shape[1]] = new_matrix[new_matrix.shape[0] - expansion_lengths[0] - 1, 
+                                                                                            new_matrix.shape[1] - expansion_lengths[1] - 1]
         
         return new_matrix
     
     
-    def __fill_edges(expansion_length, expanded_matrix):
+    def __fill_edges(expansion_lengths, expanded_matrix):
         """fill in the edges of the expanded matrix
         
         Args:
@@ -63,16 +63,16 @@ class ImageUtils():
         """
         # top edge
         new_matrix = expanded_matrix.copy()
-        new_matrix = ImageUtils.__fill_horizontal_edge(expansion_length, new_matrix, "top")
+        new_matrix = ImageUtils.__fill_horizontal_edge(expansion_lengths[0], new_matrix, "top")
         
         # bottom edge
-        new_matrix = ImageUtils.__fill_horizontal_edge(expansion_length, new_matrix, "bottom")
+        new_matrix = ImageUtils.__fill_horizontal_edge(expansion_lengths[0], new_matrix, "bottom")
         
         # left edge
-        new_matrix = ImageUtils.__fill_vertical_edge(expansion_length, new_matrix, "left")
+        new_matrix = ImageUtils.__fill_vertical_edge(expansion_lengths[1], new_matrix, "left")
         
         # right edge
-        new_matrix = ImageUtils.__fill_vertical_edge(expansion_length, new_matrix, "right")
+        new_matrix = ImageUtils.__fill_vertical_edge(expansion_lengths[1], new_matrix, "right")
         
         return new_matrix
     

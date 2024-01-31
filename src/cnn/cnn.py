@@ -6,12 +6,11 @@ from utils import ImageUtils
 from kernal import Kernal
 
 class CNN:
-    def __init__(self, photo_path, photo_height, available_core, stride = 1):
+    def __init__(self, photo_path, photo_height, available_core):
         self.photo_path = photo_path
         self.photo_height = photo_height
         self.kernal_shape = (3, 3)
         self.filter_number = 1
-        self.stride = stride
         self.available_core = available_core
         
         # image pre-processing and resize
@@ -35,7 +34,7 @@ class CNN:
             return conv_mat
 
 
-    def convolution(self, filter_number, kernal_shape=(3, 3)):
+    def convolution(self, filter_number, kernal_shape=(3, 3), padding = 1):
         filter_multiplier = filter_number // self.filter_number
         self.filter_number = filter_number
         self.kernal_shape = kernal_shape
@@ -46,15 +45,20 @@ class CNN:
             self.kernals[i, :, :] = Kernal(self.kernal_shape[0], self.kernal_shape[1]).get_kernal()
             
         # expand the image matrix
-        self.expansion_length = (kernal_shape[0] - 1) // 2
-        self.expanded_feature_maps = cp.zeros((self.feature_maps.shape[0] + 2 * self.expansion_length, 
-                                               self.feature_maps.shape[1] + 2 * self.expansion_length,
+        # calculate expansion length of 1 side. Edge case: kernal_shape = 2 => expansion_length = 1
+        expansion_lengths = [(kernal_shape[0] - 1), (kernal_shape[1] - 1)]
+        for i in range(len(expansion_lengths)):
+            if expansion_lengths[i] != 1:
+                expansion_lengths[i] = expansion_lengths[i] // 2
+            
+        self.expanded_feature_maps = cp.zeros((self.feature_maps.shape[0] + 2 * expansion_lengths[0], 
+                                               self.feature_maps.shape[1] + 2 * expansion_lengths[1],
                                                self.filter_number))
-        if self.padding != 0:
+        if padding != 0:
             pool = mp.Pool(self.available_core)
             expanded_mat_result = []
             for i in range(self.feature_maps.shape[2]):
-                expanded_mat_result.append(pool.apply_async(ImageUtils.expand_photo_matrix, args=(self.feature_maps[:, :, i], self.expansion_length)))
+                expanded_mat_result.append(pool.apply_async(ImageUtils.expand_photo_matrix, args=(self.feature_maps[:, :, i], expansion_lengths)))
             pool.close()
             pool.join()
             for i in range(self.feature_maps.shape[2]):
@@ -64,6 +68,7 @@ class CNN:
             # for next step. Still means no padding, just a small hack as mapping memory 
             # like this shortens the logic for conv step.
             self.expanded_feature_maps = self.feature_maps.copy()
+            expansion_lengths = [0, 0]
         
         # convolution
         temp_feature_maps = cp.zeros((self.expanded_feature_maps.shape[0] - kernal_shape[0] + 1, 
@@ -74,7 +79,7 @@ class CNN:
         j = 0
         for i in range(filter_number):
             # pacing the change of feature_map according to the filter_number
-            # e.g. if input feature map = 32, output feature map = 64, then change the feature map every 2 iterations
+            # e.g. if input feature map = 32, output feature map = 64, then change the feature map every i iterations
             if i % filter_multiplier == 0 and i != 0:
                 j += 1
             feature_map_result.append(pool.apply_async(self.conv, args=(self.expanded_feature_maps[:, :, j], self.kernals[i, :, :])))
