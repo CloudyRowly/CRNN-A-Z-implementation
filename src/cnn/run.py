@@ -14,7 +14,7 @@ class run():
                 ax[y, x].imshow(feature_map[:, :, iteration]).set_cmap("gray")
                 ax[y, x].get_xaxis().set_ticks([])
                 ax[y, x].get_yaxis().set_ticks([])
-                ax[y, x].set_title("map #" + str(iteration))
+                # ax[y, x].set_title("map #" + str(iteration))
         
         plt.savefig(saveas, bbox_inches="tight")
         plt.close(fig)
@@ -25,25 +25,75 @@ def __main__():
 
     s = time.time()
     cnn = CNN(image_path, 32, 8)
-    cnn.convolution(64)
-    e = time.time()
-    print("time taken: " + str(e - s))
-    feature_map = cnn.get_feature_map()
-    run.render_features(feature_map, "L1.png", (4, 8))
     
-    s = time.time()
+    cnn.convolution(64)
+    feature_map_1 = cnn.get_feature_map()
+    cnn.relu()
+    feature_map_1_relu = cnn.get_feature_map()
+    
     cnn.max_pooling()
     feature_map_2 = cnn.get_feature_map()
-    e = time.time()
-    print("time taken: " + str(e - s))
-    run.render_features(feature_map_2, "L2.png", (4, 8))
     
-    s = time.time()
     cnn.convolution(128)
     feature_map_3 = cnn.get_feature_map()
+    cnn.relu()
+    feature_map_3_relu = cnn.get_feature_map()
+    
+    cnn.max_pooling()
+    feature_map_4 = cnn.get_feature_map()
+    
+    cnn.convolution(256)
+    feature_map_5 = cnn.get_feature_map()
+    cnn.relu()
+    feature_map_5_relu = cnn.get_feature_map()
+    
+    cnn.convolution(256)
+    feature_map_6 = cnn.get_feature_map()
+    cnn.relu()
+    feature_map_6_relu = cnn.get_feature_map()
+    
+    cnn.max_pooling(window_size=(1, 2), stride = (1, 2))
+    feature_map_7 = cnn.get_feature_map()
+    
+    cnn.convolution(512)
+    cnn.relu()
+    feature_map_8 = cnn.get_feature_map()
+    
+    cnn.batch_normalization()
+    
+    cnn.convolution(512)
+    cnn.relu()
+    feature_map_9 = cnn.get_feature_map()
+    
+    cnn.batch_normalization()
+    
+    cnn.max_pooling(window_size=(1, 2), stride = (1, 2))
+    feature_map_10 = cnn.get_feature_map()
+    
+    cnn.convolution(512, kernal_shape=(2, 2))
+    cnn.relu()
+    feature_map_11 = cnn.get_feature_map()
+    print(feature_map_11.shape)
+    
     e = time.time()
     print("time taken: " + str(e - s))
-    run.render_features(feature_map_3, "L3.png", (4, 8))
+    run.render_features(feature_map_1, "L1.png", (8,8))
+    run.render_features(feature_map_1_relu, "L1_relu.png", (8,8))
+    run.render_features(feature_map_2, "L2.png", (8,8))
+    run.render_features(feature_map_3, "L3.png", (16, 8))
+    run.render_features(feature_map_3_relu, "L3_relu.png", (16, 8))
+    run.render_features(feature_map_4, "L3.png", (16, 8))
+    run.render_features(feature_map_5, "L5.png", (16, 16))
+    run.render_features(feature_map_5_relu, "L5_relu.png", (16, 16))
+    run.render_features(feature_map_6_relu, "L6_relu.png", (16, 16))
+    run.render_features(feature_map_6, "L6.png", (16, 16))
+    run.render_features(feature_map_7, "L7.png", (16, 16))
+    run.render_features(feature_map_8, "L8.png", (16, 32))
+    run.render_features(feature_map_9, "L9.png", (16, 32))
+    run.render_features(feature_map_10, "L10.png", (16, 32))
+    run.render_features(feature_map_11, "L11.png", (16, 32))
+    
+    
     
 
 
