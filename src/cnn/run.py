@@ -73,10 +73,13 @@ def __main__():
     cnn.convolution(512, kernal_shape=(2, 2), padding=0)
     cnn.relu()
     feature_map_11 = cnn.get_feature_map()
-    print(feature_map_11.shape)
     
+    cnn.dense()
+    feature_sequence = cnn.get_feature_map()
+        
     e = time.time()
     print("time taken: " + str(e - s))
+    '''
     run.render_features(feature_map_1, "L1.png", (8,8))
     run.render_features(feature_map_1_relu, "L1_relu.png", (8,8))
     run.render_features(feature_map_2, "L2.png", (8,8))
@@ -92,6 +95,7 @@ def __main__():
     run.render_features(feature_map_9, "L9.png", (16, 32))
     run.render_features(feature_map_10, "L10.png", (16, 32))
     run.render_features(feature_map_11, "L11.png", (16, 32))
+    '''
     
     
 if __name__ == '__main__':

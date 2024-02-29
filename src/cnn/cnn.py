@@ -158,6 +158,10 @@ class CNN:
         for i in range(self.filter_number):
             self.feature_maps[:, :, i] = feature_map_result[i].get()
             
+            
+    def dense(self):
+        self.feature_maps = cp.ndarray.flatten(self.feature_maps)
+            
         
     def get_feature_map(self):
         return self.feature_maps
